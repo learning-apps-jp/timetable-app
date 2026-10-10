@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1"><title>授業時間割マネージャー</title>
+  <meta charset="utf-8">
+  <style>
+    :root { --navy:#102a43; --blue:#2563eb; --pale:#eff6ff; --line:#d9e2ec; --text:#243b53; --muted:#627d98; --danger:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif; color:var(--text); background:#f5f7fa; }
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+    header { background:var(--navy); color:white; padding:18px max(18px,calc((100% - 1180px)/2)); display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    header h1 { margin:0; font-size:1.25rem; }
+    header span { color:#bcccdc; font-size:.8rem; }
+    nav { background:white; border-bottom:1px solid var(--line); display:flex; gap:4px; padding:8px max(12px,calc((100% - 1180px)/2)); position:sticky; top:0; z-index:2; overflow:auto; }
+    nav button { border:0; background:transparent; color:var(--muted); padding:10px 15px; border-radius:9px; white-space:nowrap; }
+    nav button.active { background:var(--pale); color:var(--blue); font-weight:700; }
+    main { max-width:1180px; margin:0 auto; padding:20px; }
+    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+    .toolbar h2 { margin:0; font-size:1.35rem; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn { border:1px solid var(--line); background:white; padding:9px 14px; border-radius:9px; color:var(--text); }
+    .btn.primary { border-color:var(--blue); background:var(--blue); color:white; }
+    .btn.danger { color:var(--danger); }
+    .panel { background:white; border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 1px 2px #102a4310; }
+    .lesson-list { display:grid; gap:10px; }
+    .lesson { display:grid; grid-template-columns:56px 1fr auto; gap:12px; align-items:center; padding:14px; border:1px solid var(--line); border-left:5px solid var(--blue); border-radius:10px; background:white; }
+    .period { text-align:center; font-weight:800; color:var(--navy); }
+    .lesson h3 { margin:0 0 4px; font-size:1rem; }
+    .lesson p { margin:0; color:var(--muted); font-size:.86rem; }
+    .badge { background:var(--pale); color:var(--blue); border-radius:999px; padding:4px 8px; font-size:.75rem; font-weight:700; }
+    .week { display:grid; grid-template-columns:repeat(5,minmax(160px,1fr)); gap:10px; overflow:auto; }
+    .day { min-width:160px; }
+    .day-head { font-weight:800; text-align:center; padding:9px; background:var(--pale); border-radius:9px; margin-bottom:8px; }
+    .day .lesson { grid-template-columns:36px 1fr; padding:10px; margin-bottom:7px; }
+    .day .lesson .badge { display:none; }
+    .slot { min-height:76px; border:1px dashed var(--line); border-radius:9px; margin-bottom:7px; padding:5px; position:relative; }
+    .slot::before { content:attr(data-period)'限'; color:#9fb3c8; font-size:.7rem; position:absolute; right:6px; top:4px; }
+    .slot .lesson { margin:0; min-height:64px; cursor:grab; }
+    .lesson.selected { outline:3px solid #f59e0b; }
+    .hint { color:var(--muted); font-size:.82rem; }
+    .record-grid,.basic-grid { display:grid; gap:10px; }
+    .record-card { padding:14px; border:1px solid var(--line); border-radius:10px; }
+    .record-card h3 { margin:0 0 8px; }
+    .record-card p { margin:4px 0; white-space:pre-wrap; }
+    .master-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:16px; }
+    .master-panel h3 { margin:0 0 12px; }
+    .master-add { display:flex; gap:7px; margin-bottom:10px; }
+    .master-add input { min-width:0; }
+    .master-values { display:flex; flex-wrap:wrap; gap:7px; }
+    .master-chip { display:inline-flex; align-items:center; gap:5px; background:var(--pale); color:var(--text); border-radius:999px; padding:5px 6px 5px 10px; font-size:.82rem; }
+    .master-chip button { border:0; background:transparent; color:var(--danger); padding:0 3px; font-weight:800; }
+    .backup-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .empty { color:var(--muted); text-align:center; padding:38px 15px; }
+    dialog { width:min(620px,calc(100% - 24px)); border:0; border-radius:16px; padding:0; box-shadow:0 20px 60px #102a4360; }
+    dialog::backdrop { background:#102a4388; }
+    .modal-head,.modal-foot { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid var(--line); }
+    .modal-foot { border:0; border-top:1px solid var(--line); }
+    .modal-head h2 { margin:0; font-size:1.15rem; }
+    form .body { padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    label { display:grid; gap:6px; font-size:.82rem; color:var(--muted); }
+    label.wide { grid-column:1/-1; }
+    input,select,textarea { width:100%; border:1px solid var(--line); border-radius:8px; padding:10px; color:var(--text); background:white; }
+    textarea { min-height:80px; resize:vertical; }
+    #notice { position:fixed; right:16px; bottom:16px; background:var(--navy); color:white; border-radius:10px; padding:12px 16px; opacity:0; transform:translateY(10px); pointer-events:none; transition:.2s; z-index:9; }
+    #notice.show { opacity:1; transform:none; }
+    .error { background:#991b1b!important; }
+    @media(max-width:640px) { main{padding:14px}.week{grid-template-columns:repeat(5,78vw)}form .body{grid-template-columns:1fr}.lesson{grid-template-columns:44px 1fr}.lesson .badge{grid-column:2}.desktop-only{display:none} }
+  </style>
+</head>
+<body>
+  <header><div><h1>授業時間割マネージャー</h1><span>端末内保存版</span></div><button class="btn" onclick="downloadBackup()">JSON保存</button></header><p style="margin:0;padding:10px 20px;background:#eff6ff;font-size:13px">端末内保存版：データはこのブラウザーに保存されます。端末間の自動同期はありません。設定からJSONバックアップを保存できます。</p>
+  <nav>
+    <button class="active" data-view="today">今日</button>
+    <button data-view="week">今週</button>
+    <button data-view="basic">基本時間割</button>
+    <button data-view="records">授業記録</button>
+    <button data-view="settings">設定</button>
+  </nav>
+  <main>
+    <section id="todayView">
+      <div class="toolbar"><h2>今日の授業</h2><div class="actions"><input id="todayDate" type="date"><button class="btn primary" onclick="openEditor()">＋ 授業</button></div></div>
+      <div id="todayList" class="lesson-list"></div>
+    </section>
+    <section id="weekView" hidden>
+      <div class="toolbar"><div><h2>今週の時間割</h2><div class="hint">PCはドラッグ、スマホは授業を選択して移動先をタップ</div></div><div class="actions"><button class="btn" onclick="shiftWeek(-7)">← 前週</button><button class="btn" onclick="shiftWeek(7)">翌週 →</button></div></div>
+      <div id="weekRange" style="color:var(--muted);margin-bottom:12px"></div><div id="weekGrid" class="week"></div>
+    </section>
+    <section id="basicView" hidden>
+      <div class="toolbar"><h2>基本時間割</h2><div class="actions"><button class="btn" onclick="applyBasic()">表示週へ反映</button><button class="btn primary" onclick="openBasicEditor()">＋ 時間割</button></div></div>
+      <div id="basicGrid" class="basic-grid"></div>
+    </section>
+    <section id="recordsView" hidden>
+      <div class="toolbar"><h2>授業記録</h2><div class="actions"><input id="recordSearch" type="search" placeholder="記録を検索"><button class="btn" onclick="loadRecords()">検索</button></div></div>
+      <div id="recordList" class="record-grid"></div>
+    </section>
+    <section id="settingsView" hidden>
+      <div class="toolbar"><h2>設定</h2></div>
+      <div id="masterGrid" class="master-grid"></div>
+      <div class="panel" style="margin-bottom:16px"><h3>バックアップ・書き出し</h3><p class="hint">JSON復元を実行すると、現在のデータはバックアップ内容で置き換わります。</p><div class="backup-actions"><button class="btn" onclick="downloadBackup()">JSON保存</button><button class="btn" onclick="downloadCsv()">CSV保存</button><button class="btn danger" onclick="$('jsonImport').click()">JSONから復元</button><input id="jsonImport" type="file" accept="application/json,.json" hidden onchange="importBackup(this)"></div></div>
+      <div class="panel"><h3>初期設定</h3><p>保存領域は初回に自動で用意されます。この操作では登録済みデータを削除しません。</p><button class="btn primary" onclick="setup()">保存領域を確認</button></div>
+    </section>
+  </main>
+
+  <dialog id="editor">
+    <form id="lessonForm">
+      <div class="modal-head"><h2 id="editorTitle">授業を追加</h2><button type="button" class="btn" onclick="closeEditor()">閉じる</button></div>
+      <div class="body">
+        <input id="lessonId" type="hidden">
+        <label>日付<input id="date" type="date" required></label>
+        <label>時限<input id="period" type="number" min="1" max="12" required></label>
+        <label>教科<input id="subject" list="subjects" required></label>
+        <label>学年<input id="grade" list="grades" required></label>
+        <label>クラス<input id="className" list="classes" required></label>
+        <label>教室<input id="room" list="rooms"></label>
+        <label class="wide">単元・タイトル<input id="topic" list="topics"></label>
+        <label>番号モード<select id="numberMode"><option value="auto">自動</option><option value="manual">手動</option><option value="none">表示しない</option></select></label>
+        <label>授業番号<input id="lessonNo" type="number" min="1" disabled></label>
+        <label>開始時刻<input id="startTime" type="time"></label>
+        <label>終了時刻<input id="endTime" type="time"></label>
+        <label class="wide">メモ<textarea id="memo"></textarea></label>
+      </div>
+      <div class="modal-foot"><div class="actions"><button id="deleteButton" type="button" class="btn danger" onclick="removeLesson()" hidden>削除</button><button id="duplicateButton" type="button" class="btn" onclick="duplicateLesson()" hidden>複製</button></div><div class="actions"><button type="button" class="btn" onclick="closeEditor()">キャンセル</button><button class="btn primary" type="submit">保存</button></div></div>
+    </form>
+  </dialog>
+  <dialog id="basicEditor">
+    <form id="basicForm">
+      <div class="modal-head"><h2>基本時間割を編集</h2><button type="button" class="btn" onclick="closeBasicEditor()">閉じる</button></div>
+      <div class="body">
+        <label>曜日<select id="basicWeekday"><option value="1">月</option><option value="2">火</option><option value="3">水</option><option value="4">木</option><option value="5">金</option></select></label>
+        <label>時限<input id="basicPeriod" type="number" min="1" max="12" required></label>
+        <label>教科<input id="basicSubject" list="subjects" required></label><label>学年<input id="basicGrade" list="grades"></label>
+        <label>クラス<input id="basicClass" list="classes"></label><label>教室<input id="basicRoom" list="rooms"></label>
+        <label class="wide">単元・タイトル<input id="basicTopic"></label>
+        <label>番号モード<select id="basicNumberMode"><option value="auto">自動</option><option value="none">表示しない</option></select></label>
+        <label>開始時刻<input id="basicStartTime" type="time"></label><label>終了時刻<input id="basicEndTime" type="time"></label>
+      </div>
+      <div class="modal-foot"><button id="deleteBasicButton" type="button" class="btn danger" onclick="removeBasic()" hidden>削除</button><div class="actions"><button type="button" class="btn" onclick="closeBasicEditor()">キャンセル</button><button class="btn primary" type="submit">保存</button></div></div>
+    </form>
+  </dialog>
+  <dialog id="recordEditor">
+    <form id="recordForm">
+      <div class="modal-head"><h2>授業記録</h2><button type="button" class="btn" onclick="closeRecordEditor()">閉じる</button></div>
+      <div class="body">
+        <input id="recordId" type="hidden"><input id="recordLessonId" type="hidden">
+        <label class="wide">本時の目標<textarea id="plan"></textarea></label>
+        <label class="wide">実施内容<textarea id="result"></textarea></label>
+        <label class="wide">宿題<textarea id="homework"></textarea></label>
+        <label class="wide">振り返り<textarea id="reflection"></textarea></label>
+      </div>
+      <div class="modal-foot"><span></span><div class="actions"><button type="button" class="btn" onclick="closeRecordEditor()">キャンセル</button><button class="btn primary" type="submit">保存</button></div></div>
+    </form>
+  </dialog>
+  <datalist id="subjects"></datalist><datalist id="grades"></datalist><datalist id="classes"></datalist><datalist id="rooms"></datalist><datalist id="topics"></datalist>
+  <div id="notice"></div>
+  <script src="backend.js"></script>
+  <script>
+    const state={date:localDate(new Date()),lessons:[],week:null,masters:{},basicTimetable:[],records:[],selectedLessonId:null};
+    const $=id=>document.getElementById(id);
+    document.addEventListener('DOMContentLoaded',()=>{
+      $('todayDate').value=state.date;
+      $('todayDate').addEventListener('change',e=>{state.date=e.target.value;load();});
+      $('numberMode').addEventListener('change',e=>$('lessonNo').disabled=e.target.value!=='manual');
+      $('lessonForm').addEventListener('submit',saveLesson);
+      $('basicForm').addEventListener('submit',saveBasic);
+      $('recordForm').addEventListener('submit',saveRecord);
+      document.querySelectorAll('nav button').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
+      load();
+    });
+    function call(action,payload={}){return localCall(action,payload);}
+    async function load(){try{const data=await call('bootstrap',{date:state.date});Object.assign(state,data);render();}catch(error){notify(error.message,true);}}
+    function render(){
+      const todays=state.lessons.filter(x=>x.Date===state.date);
+      $('todayList').innerHTML=todays.length?todays.map(lessonCard).join(''):'<div class="panel empty">この日の授業はありません。</div>';
+      $('weekRange').textContent=`${state.week.from} 〜 ${state.week.to}`;
+      const names=['月','火','水','木','金'];
+      const maxPeriod=Math.max(6,...state.week.days.flatMap(day=>day.lessons.map(x=>Number(x.Period)||0)),...state.basicTimetable.map(x=>Number(x.Period)||0));
+      $('weekGrid').innerHTML=state.week.days.map((day,i)=>`<div class="day"><div class="day-head">${names[i]} ${day.date.slice(5).replace('-','/')}</div>${Array.from({length:maxPeriod},(_,p)=>weekSlot(day.date,p+1,day.lessons.find(x=>Number(x.Period)===p+1))).join('')}</div>`).join('');
+      const sortedBasics=[...state.basicTimetable].sort((a,b)=>Number(a.Weekday)-Number(b.Weekday)||Number(a.Period)-Number(b.Period));
+      $('basicGrid').innerHTML=sortedBasics.length?sortedBasics.map(item=>`<article class="lesson" onclick="editBasic(${Number(item.Weekday)},${Number(item.Period)})"><div class="period">${names[Number(item.Weekday)-1]}<br>${item.Period}限</div><div><h3>${escapeHtml(item.Subject)} ${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</h3><p>${escapeHtml(item.Topic||item.Room||'')}</p></div><span class="badge">${item.NumberMode==='none'?'番号なし':'自動採番'}</span></article>`).join(''):'<div class="panel empty">基本時間割はまだ登録されていません。</div>';
+      [['subjects','Subject'],['grades','Grade'],['classes','Class'],['rooms','Room']].forEach(([id,key])=>$(id).innerHTML=(state.masters[key]||[]).map(value=>`<option value="${escapeHtml(value)}">`).join(''));
+      $('topics').innerHTML=(state.masters.Topic||[]).map(value=>`<option value="${escapeHtml(value)}">`).join('');
+      renderMasters();
+    }
+    function lessonCard(item){const id=safeId(item.ID);const number=item.NumberMode==='none'?'':`<span class="badge">No.${item.LessonNo}</span>`;return `<article class="lesson" onclick="editLesson(decodeURIComponent('${id}'))"><div class="period">${item.Period}限</div><div><h3>${escapeHtml(item.Subject)} ${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</h3><p>${escapeHtml(item.Topic||item.Room||'')}</p><button class="btn" style="margin-top:7px;padding:4px 8px" onclick="event.stopPropagation();openRecordEditor(decodeURIComponent('${id}'))">記録</button></div>${number}</article>`;}
+    function weekSlot(date,period,item){return `<div class="slot" data-period="${period}" onclick="moveSelected('${date}',${period})" ondragover="event.preventDefault()" ondrop="dropLesson(event,'${date}',${period})">${item?weekLessonCard(item):''}</div>`;}
+    function weekLessonCard(item){const id=safeId(item.ID);const selected=state.selectedLessonId===item.ID?' selected':'';const number=item.NumberMode==='none'?'':`<span class="badge">No.${item.LessonNo}</span>`;return `<article class="lesson${selected}" draggable="true" ondragstart="dragLesson(event,decodeURIComponent('${id}'))" onclick="event.stopPropagation();tapWeekLesson(decodeURIComponent('${id}'))" ondblclick="event.stopPropagation();editLesson(decodeURIComponent('${id}'))"><div class="period">${item.Period}</div><div><h3>${escapeHtml(item.Subject)}</h3><p>${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</p></div>${number}</article>`;}
+    function showView(name){document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));['today','week','basic','records','settings'].forEach(x=>$(x+'View').hidden=x!==name);if(name==='records')loadRecords();}
+    function openEditor(item={}){const values={lessonId:item.ID||'',date:item.Date||state.date,period:item.Period||'',subject:item.Subject||'',grade:item.Grade||'',className:item.Class||'',room:item.Room||'',topic:item.Topic||'',numberMode:item.NumberMode||'auto',lessonNo:item.LessonNo||'',startTime:item.StartTime||'',endTime:item.EndTime||'',memo:item.Memo||''};Object.entries(values).forEach(([id,value])=>$(id).value=value);$('lessonNo').disabled=values.numberMode!=='manual';$('deleteButton').hidden=!item.ID;$('duplicateButton').hidden=!item.ID;$('editorTitle').textContent=item.ID?'授業を編集':'授業を追加';$('editor').showModal();}
+    function editLesson(id){openEditor(state.lessons.find(x=>x.ID===id));}
+    function closeEditor(){$('editor').close();}
+    async function saveLesson(event){event.preventDefault();const payload={ID:$('lessonId').value,Date:$('date').value,Period:Number($('period').value),Subject:$('subject').value,Grade:$('grade').value,Class:$('className').value,Room:$('room').value,Topic:$('topic').value,NumberMode:$('numberMode').value,LessonNo:$('lessonNo').value,Memo:$('memo').value,StartTime:$('startTime').value,EndTime:$('endTime').value};try{await call('save',payload);closeEditor();notify('保存しました');await load();}catch(error){notify(error.message,true);}}
+    async function removeLesson(){if(!confirm('この授業を削除しますか？'))return;try{await call('delete',{ID:$('lessonId').value});closeEditor();notify('削除しました');await load();}catch(error){notify(error.message,true);}}
+    async function duplicateLesson(){const id=$('lessonId').value;if(!id)return;try{await call('duplicate',{ID:id});closeEditor();notify('授業を複製しました');await load();}catch(error){notify(error.message,true);}}
+    function selectLesson(id){state.selectedLessonId=state.selectedLessonId===id?null:id;render();if(state.selectedLessonId)notify('移動先の空き枠または授業をタップしてください');}
+    function tapWeekLesson(id){const target=state.lessons.find(x=>x.ID===id);if(state.selectedLessonId&&state.selectedLessonId!==id&&target){moveLesson(state.selectedLessonId,target.Date,Number(target.Period));return;}selectLesson(id);}
+    function dragLesson(event,id){event.dataTransfer.setData('text/plain',id);event.dataTransfer.effectAllowed='move';}
+    function dropLesson(event,date,period){event.preventDefault();const id=event.dataTransfer.getData('text/plain');if(id)moveLesson(id,date,period);}
+    function moveSelected(date,period){if(state.selectedLessonId)moveLesson(state.selectedLessonId,date,period);}
+    async function moveLesson(id,date,period){const source=state.lessons.find(x=>x.ID===id);if(!source||(source.Date===date&&Number(source.Period)===period)){state.selectedLessonId=null;render();return;}try{await call('move',{ID:id,Date:date,Period:period});state.selectedLessonId=null;notify('授業を移動しました');await load();}catch(error){notify(error.message,true);}}
+    function openBasicEditor(item={}){const values={basicWeekday:item.Weekday||1,basicPeriod:item.Period||'',basicSubject:item.Subject||'',basicGrade:item.Grade||'',basicClass:item.Class||'',basicRoom:item.Room||'',basicTopic:item.Topic||'',basicNumberMode:item.NumberMode||'auto',basicStartTime:item.StartTime||'',basicEndTime:item.EndTime||''};Object.entries(values).forEach(([id,value])=>$(id).value=value);$('deleteBasicButton').hidden=!item.Subject;$('basicWeekday').disabled=Boolean(item.Subject);$('basicPeriod').disabled=Boolean(item.Subject);$('basicEditor').showModal();}
+    function editBasic(weekday,period){openBasicEditor(state.basicTimetable.find(x=>Number(x.Weekday)===weekday&&Number(x.Period)===period));}
+    function closeBasicEditor(){$('basicEditor').close();$('basicWeekday').disabled=false;$('basicPeriod').disabled=false;}
+    async function saveBasic(event){event.preventDefault();const payload={Weekday:Number($('basicWeekday').value),Period:Number($('basicPeriod').value),Subject:$('basicSubject').value,Grade:$('basicGrade').value,Class:$('basicClass').value,Room:$('basicRoom').value,Topic:$('basicTopic').value,NumberMode:$('basicNumberMode').value,StartTime:$('basicStartTime').value,EndTime:$('basicEndTime').value};try{await call('saveBasic',payload);closeBasicEditor();notify('基本時間割を保存しました');await load();}catch(error){notify(error.message,true);}}
+    async function removeBasic(){if(!confirm('この基本時間割を削除しますか？'))return;try{await call('deleteBasic',{Weekday:Number($('basicWeekday').value),Period:Number($('basicPeriod').value)});closeBasicEditor();notify('削除しました');await load();}catch(error){notify(error.message,true);}}
+    async function applyBasic(){try{const result=await call('applyBasic',{date:state.date});notify(result.created?`${result.created}件を作成しました`:'追加する授業はありません');await load();}catch(error){notify(error.message,true);}}
+    async function openRecordEditor(lessonId){try{const records=await call('listRecords',{LessonID:lessonId});const record=records[0]||{};$('recordId').value=record.RecordID||'';$('recordLessonId').value=lessonId;$('plan').value=record.Plan||'';$('result').value=record.Result||'';$('homework').value=record.Homework||'';$('reflection').value=record.Reflection||'';$('recordEditor').showModal();}catch(error){notify(error.message,true);}}
+    function closeRecordEditor(){$('recordEditor').close();}
+    async function saveRecord(event){event.preventDefault();const payload={RecordID:$('recordId').value,LessonID:$('recordLessonId').value,Plan:$('plan').value,Result:$('result').value,Homework:$('homework').value,Reflection:$('reflection').value};try{await call('saveRecord',payload);closeRecordEditor();notify('授業記録を保存しました');await loadRecords();}catch(error){notify(error.message,true);}}
+    async function loadRecords(){try{state.records=await call('listRecords',{query:$('recordSearch').value});$('recordList').innerHTML=state.records.length?state.records.map(record=>{const lesson=state.lessons.find(x=>x.ID===record.LessonID)||{};const lessonId=safeId(record.LessonID);return `<article class="record-card" onclick="openRecordEditor(decodeURIComponent('${lessonId}'))"><h3>${escapeHtml(record.Date)}　${escapeHtml(lesson.Subject||'授業')}</h3><p><strong>目標：</strong>${escapeHtml(record.Plan||'')}</p><p><strong>実施：</strong>${escapeHtml(record.Result||'')}</p><p><strong>宿題：</strong>${escapeHtml(record.Homework||'')}</p><p><strong>振り返り：</strong>${escapeHtml(record.Reflection||'')}</p></article>`;}).join(''):'<div class="panel empty">該当する授業記録はありません。</div>';}catch(error){notify(error.message,true);}}
+    async function setup(){try{await call('setup');notify('初期化しました');await load();}catch(error){notify(error.message,true);}}
+    function renderMasters(){const labels={Subject:'教科',Grade:'学年',Class:'クラス',Room:'教室',Topic:'タイトル候補'};$('masterGrid').innerHTML=Object.entries(labels).map(([type,label])=>`<section class="panel master-panel"><h3>${label}</h3><div class="master-add"><input id="master-${type}" placeholder="${label}を入力" onkeydown="if(event.key==='Enter'){event.preventDefault();addMaster('${type}')}"/><button class="btn primary" onclick="addMaster('${type}')">追加</button></div><div class="master-values">${(state.masters[type]||[]).map(value=>`<span class="master-chip">${escapeHtml(value)}<button type="button" aria-label="${escapeHtml(value)}を削除" data-master-type="${type}" data-master-value="${escapeHtml(value)}" onclick="removeMaster(this)">×</button></span>`).join('')||'<span class="hint">未登録</span>'}</div></section>`).join('');}
+    async function addMaster(type){const input=$('master-'+type);const value=input.value.trim();if(!value)return;try{await call('saveMaster',{Type:type,Value:value});input.value='';notify('候補を追加しました');await load();}catch(error){notify(error.message,true);}}
+    async function removeMaster(button){const {masterType:Type,masterValue:Value}=button.dataset;if(!confirm(`「${Value}」を候補から削除しますか？`))return;try{await call('deleteMaster',{Type,Value});notify('候補を削除しました');await load();}catch(error){notify(error.message,true);}}
+    function shiftWeek(days){const date=new Date(state.date+'T00:00:00');date.setDate(date.getDate()+days);state.date=localDate(date);$('todayDate').value=state.date;load();}
+    async function downloadBackup(){try{const data=await call('exportJson');const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`lesson-backup-${state.date}.json`;a.click();URL.revokeObjectURL(a.href);}catch(error){notify(error.message,true);}}
+    async function downloadCsv(){try{const data=await call('exportCsv');let content=typeof data==='string'?data:(data.content||data.csv||'');if(!content.startsWith('\ufeff'))content='\ufeff'+content;const blob=new Blob([content],{type:'text/csv;charset=utf-8'});downloadBlob(blob,(data&&data.filename)||`lessons-${state.date}.csv`);notify('CSVを保存しました');}catch(error){notify(error.message,true);}}
+    async function importBackup(input){const file=input.files&&input.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!confirm(`「${file.name}」から復元しますか？\n現在のデータはバックアップ内容で置き換わります。`))return;await call('importJson',{data});notify('バックアップを復元しました');await load();}catch(error){notify(error instanceof SyntaxError?'JSONファイルの形式が正しくありません':error.message,true);}finally{input.value='';}}
+    function downloadBlob(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),0);}
+    function localDate(date){return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');}
+    function safeId(value){return encodeURIComponent(String(value)).replace(/'/g,'%27');}
+    function escapeHtml(value){return String(value).replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
+    let noticeTimer;function notify(message,error=false){clearTimeout(noticeTimer);$('notice').textContent=message;$('notice').className='show'+(error?' error':'');noticeTimer=setTimeout(()=>$('notice').className='',3000);}
+  </script>
+</body>
+</html>
