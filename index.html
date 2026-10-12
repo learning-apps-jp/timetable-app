@@ -32,8 +32,10 @@
     .week { display:grid; grid-template-columns:repeat(5,minmax(160px,1fr)); gap:10px; overflow:auto; }
     .day { min-width:160px; }
     .day-head { font-weight:800; text-align:center; padding:9px; background:var(--pale); border-radius:9px; margin-bottom:8px; }
-    .day .lesson { grid-template-columns:36px 1fr; padding:10px; margin-bottom:7px; }
+    .day .lesson { grid-template-columns:58px 1fr; padding:10px; margin-bottom:7px; }
     .day .lesson .badge { display:none; }
+    .lesson-number { color:var(--blue); font-size:1rem; font-weight:800; line-height:1.1; text-align:center; white-space:nowrap; }
+    .lesson-number.none { color:var(--muted); font-size:.68rem; }
     .slot { min-height:76px; border:1px dashed var(--line); border-radius:9px; margin-bottom:7px; padding:5px; position:relative; }
     .slot::before { content:attr(data-period)'限'; color:#9fb3c8; font-size:.7rem; position:absolute; right:6px; top:4px; }
     .slot .lesson { margin:0; min-height:64px; cursor:grab; }
@@ -184,7 +186,7 @@
     }
     function lessonCard(item){const id=safeId(item.ID);const number=item.NumberMode==='none'?'':`<span class="badge">No.${item.LessonNo}</span>`;return `<article class="lesson" onclick="editLesson(decodeURIComponent('${id}'))"><div class="period">${item.Period}限</div><div><h3>${escapeHtml(item.Subject)} ${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</h3><p>${escapeHtml(item.Topic||item.Room||'')}</p><button class="btn" style="margin-top:7px;padding:4px 8px" onclick="event.stopPropagation();openRecordEditor(decodeURIComponent('${id}'))">記録</button></div>${number}</article>`;}
     function weekSlot(date,period,item){return `<div class="slot" data-period="${period}" onclick="moveSelected('${date}',${period})" ondragover="event.preventDefault()" ondrop="dropLesson(event,'${date}',${period})">${item?weekLessonCard(item):''}</div>`;}
-    function weekLessonCard(item){const id=safeId(item.ID);const selected=state.selectedLessonId===item.ID?' selected':'';const number=item.NumberMode==='none'?'':`<span class="badge">No.${item.LessonNo}</span>`;return `<article class="lesson${selected}" draggable="true" ondragstart="dragLesson(event,decodeURIComponent('${id}'))" onclick="event.stopPropagation();tapWeekLesson(decodeURIComponent('${id}'))" ondblclick="event.stopPropagation();editLesson(decodeURIComponent('${id}'))"><div class="period">${item.Period}</div><div><h3>${escapeHtml(item.Subject)}</h3><p>${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</p></div>${number}</article>`;}
+    function weekLessonCard(item){const id=safeId(item.ID);const selected=state.selectedLessonId===item.ID?' selected':'';const number=item.NumberMode==='none'?'<div class="lesson-number none">番号なし</div>':`<div class="lesson-number">No.${escapeHtml(item.LessonNo)}</div>`;return `<article class="lesson${selected}" draggable="true" ondragstart="dragLesson(event,decodeURIComponent('${id}'))" onclick="event.stopPropagation();tapWeekLesson(decodeURIComponent('${id}'))" ondblclick="event.stopPropagation();editLesson(decodeURIComponent('${id}'))">${number}<div><h3>${escapeHtml(item.Subject)}</h3><p>${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</p></div></article>`;}
     function showView(name){document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));['today','week','basic','records','settings'].forEach(x=>$(x+'View').hidden=x!==name);if(name==='records')loadRecords();}
     function openEditor(item={}){const values={lessonId:item.ID||'',date:item.Date||state.date,period:item.Period||'',subject:item.Subject||'',grade:item.Grade||'',className:item.Class||'',room:item.Room||'',topic:item.Topic||'',numberMode:item.NumberMode||'auto',lessonNo:item.LessonNo||'',startTime:item.StartTime||'',endTime:item.EndTime||'',memo:item.Memo||''};Object.entries(values).forEach(([id,value])=>$(id).value=value);$('lessonNo').disabled=values.numberMode!=='manual';$('deleteButton').hidden=!item.ID;$('duplicateButton').hidden=!item.ID;$('editorTitle').textContent=item.ID?'授業を編集':'授業を追加';$('editor').showModal();}
     function editLesson(id){openEditor(state.lessons.find(x=>x.ID===id));}
