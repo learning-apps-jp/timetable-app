@@ -120,6 +120,15 @@
     @media(max-width:640px) {
       body{padding-left:0;padding-bottom:74px}header{position:relative;width:100%;height:auto;padding:18px 20px;display:flex}header h1{max-width:none;font-size:1rem}header span{margin-top:2px}header>.btn{position:static;width:auto;padding:8px 10px}nav{top:auto;bottom:0;width:100%;height:66px;flex-direction:row;gap:0;padding:6px;background:white;border-top:1px solid var(--line);overflow:visible}nav button{flex:1;padding:5px 2px;text-align:center;font-size:.65rem;color:var(--muted)}nav button::before{display:block;width:auto;margin-bottom:3px;font-size:1.2rem}nav button.active{background:var(--pale);color:var(--blue)}nav button:hover{background:var(--pale);color:var(--blue)}main{padding:24px 16px}.toolbar h2{font-size:1.35rem}.week{grid-template-columns:repeat(5,76vw);scroll-snap-type:x mandatory}.day{scroll-snap-align:start}.day .lesson{grid-template-columns:64px 1fr;min-height:86px}.lesson-number{font-size:1.15rem}.toolbar{gap:16px}.toolbar .hint{max-width:270px;line-height:1.6}.slot{min-height:106px}.actions{max-width:100%}
     }
+    .week { grid-template-columns:52px repeat(5,minmax(148px,1fr)); }
+    .period-axis { position:sticky; left:0; z-index:1; background:#f6f7f9; }
+    .period-axis .day-head { font-size:.72rem; }
+    .period-row { height:106px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:3px; color:#43516a; font-size:1.15rem; font-weight:750; background:#edf0f5; border-radius:6px; }
+    .period-row span { font-size:.7rem; font-weight:500; }
+    .slot { height:106px; min-height:106px; }
+    .slot::before { display:none; }
+    .slot .lesson { height:86px; overflow:auto; }
+    @media(max-width:640px) { .week { grid-template-columns:42px repeat(5,calc(76vw - 42px)); scroll-padding-left:52px; }.period-row{font-size:1rem}.day-head{white-space:nowrap} }
   </style>
 </head>
 <body>
@@ -229,7 +238,7 @@
       $('weekRange').textContent=`${state.week.from} 〜 ${state.week.to}`;
       const names=['月','火','水','木','金'];
       const maxPeriod=Math.max(6,...state.week.days.flatMap(day=>day.lessons.map(x=>Number(x.Period)||0)),...state.basicTimetable.map(x=>Number(x.Period)||0));
-      $('weekGrid').innerHTML=state.week.days.map((day,i)=>`<div class="day"><div class="day-head">${names[i]} ${day.date.slice(5).replace('-','/')}</div>${Array.from({length:maxPeriod},(_,p)=>weekSlot(day.date,p+1,day.lessons.find(x=>Number(x.Period)===p+1))).join('')}</div>`).join('');
+      $('weekGrid').innerHTML=`<div class="period-axis"><div class="day-head">時限</div>${Array.from({length:maxPeriod},(_,p)=>`<div class="period-row">${p+1}<span>限</span></div>`).join('')}</div>`+state.week.days.map((day,i)=>`<div class="day"><div class="day-head">${names[i]} ${day.date.slice(5).replace('-','/')}</div>${Array.from({length:maxPeriod},(_,p)=>weekSlot(day.date,p+1,day.lessons.find(x=>Number(x.Period)===p+1))).join('')}</div>`).join('');
       const sortedBasics=[...state.basicTimetable].sort((a,b)=>Number(a.Weekday)-Number(b.Weekday)||Number(a.Period)-Number(b.Period));
       $('basicGrid').innerHTML=sortedBasics.length?sortedBasics.map(item=>`<article class="lesson" onclick="editBasic(${Number(item.Weekday)},${Number(item.Period)})"><div class="period">${names[Number(item.Weekday)-1]}<br>${item.Period}限</div><div><h3>${escapeHtml(item.Subject)} ${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</h3><p>${escapeHtml(item.Topic||item.Room||'')}</p></div><span class="badge">${item.NumberMode==='none'?'番号なし':'自動採番'}</span></article>`).join(''):'<div class="panel empty">基本時間割はまだ登録されていません。</div>';
       [['subjects','Subject'],['grades','Grade'],['classes','Class'],['rooms','Room']].forEach(([id,key])=>$(id).innerHTML=(state.masters[key]||[]).map(value=>`<option value="${escapeHtml(value)}">`).join(''));
