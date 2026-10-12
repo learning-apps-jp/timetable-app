@@ -68,6 +68,58 @@
     #notice.show { opacity:1; transform:none; }
     .error { background:#991b1b!important; }
     @media(max-width:640px) { main{padding:14px}.week{grid-template-columns:repeat(5,78vw)}form .body{grid-template-columns:1fr}.lesson{grid-template-columns:44px 1fr}.lesson .badge{grid-column:2}.desktop-only{display:none} }
+    /* Workspace design: ink sidebar, paper canvas, restrained subject colors. */
+    :root { --navy:#192638; --blue:#3f5ee8; --pale:#eef1fc; --line:#e2e6ed; --text:#263244; --muted:#7b8595; }
+    body { background:#f6f7f9; padding-left:212px; letter-spacing:.015em; }
+    header { position:fixed; inset:0 auto auto 0; width:212px; height:124px; padding:28px 22px; display:block; z-index:4; }
+    header h1 { font-size:1.05rem; line-height:1.65; max-width:160px; }
+    header h1 { font-size:0; } header h1::after { content:'授業時間割'; font-size:1.2rem; letter-spacing:.06em; }
+    header span { display:block; margin-top:8px; font-size:.7rem; color:#93a1b5; }
+    header>.btn { position:fixed; bottom:28px; left:22px; width:168px; background:#26364b; border-color:#3a4960; color:#d7deea; font-size:.8rem; }
+    body>p { display:none; }
+    nav { position:fixed; top:124px; bottom:0; left:0; width:212px; padding:12px; display:flex; flex-direction:column; gap:6px; background:var(--navy); border:0; z-index:3; }
+    nav button { text-align:left; padding:14px 16px; color:#abb8ca; border-radius:7px; font-size:.9rem; }
+    nav button::before { display:inline-block; width:28px; font-size:1.05rem; opacity:.85; }
+    nav button[data-view=today]::before { content:'◷'; }
+    nav button[data-view=week]::before { content:'▦'; }
+    nav button[data-view=basic]::before { content:'▤'; }
+    nav button[data-view=records]::before { content:'▥'; }
+    nav button[data-view=settings]::before { content:'⚙'; }
+    nav button.active { background:#2b4167; color:#fff; }
+    nav button:hover { background:#25364f; color:white; }
+    main { max-width:1440px; padding:38px 32px; }
+    .toolbar { margin-bottom:24px; }
+    .toolbar h2 { font-size:1.6rem; font-weight:750; letter-spacing:-.04em; color:#1b283c; }
+    .toolbar .hint { margin-top:8px; font-size:.75rem; }
+    .btn { border-radius:7px; padding:10px 15px; font-size:.85rem; transition:background .15s,box-shadow .15s; }
+    .btn:hover { background:#f0f3f8; }
+    .btn.primary:hover { background:#334fd0; }
+    button:focus-visible,.slot:focus-visible { outline:3px solid #95a6fc; outline-offset:3px; }
+    #weekRange { font-weight:600; font-size:.9rem; margin-bottom:20px!important; color:#58677e!important; }
+    .week { grid-template-columns:repeat(5,minmax(148px,1fr)); gap:12px; padding-bottom:10px; }
+    .day { min-width:148px; }
+    .day-head { background:transparent; border-bottom:2px solid #e3e7ef; padding:12px 4px 16px; border-radius:0; margin-bottom:14px; font-size:.87rem; color:#58677e; }
+    .day.current-day .day-head { color:var(--blue); border-color:var(--blue); }
+    .slot { min-height:106px; padding:19px 0 0; border:0; border-radius:0; margin-bottom:12px; background:linear-gradient(#ebedf2,#ebedf2) left 20px/100% 1px no-repeat; }
+    .slot::before { top:0; right:2px; color:#8c96a6; font-size:.65rem; }
+    .slot:empty::after { content:'+'; display:block; text-align:center; color:#c8ced8; padding-top:24px; font-size:1.1rem; }
+    .day .lesson { grid-template-columns:1fr; gap:9px; padding:13px 14px; border:1px solid #e1e5f0; border-left:3px solid var(--subject-color,var(--blue)); border-radius:8px; background:var(--subject-bg,#f0f3fc); min-height:86px; box-shadow:0 2px 3px #182a4310; }
+    .day .lesson h3 { font-size:.9rem; font-weight:700; }
+    .day .lesson p { font-size:.75rem; }
+    .lesson-number { text-align:left; font-size:1.2rem; color:var(--subject-color,var(--blue)); letter-spacing:-.04em; }
+    .lesson-number.none { font-size:.64rem; color:var(--subject-color,#7b8595); letter-spacing:0; }
+    .lesson-content { min-width:0; }
+    .lesson { transition:box-shadow .15s,transform .15s; }
+    .lesson:hover { box-shadow:0 4px 12px #19263816; }
+    .lesson.selected { outline:2px solid #e4ad52; outline-offset:2px; }
+    .panel,.record-card { border-radius:10px; box-shadow:0 2px 5px #19263806; }
+    .master-panel h3,.panel h3 { font-size:1rem; }
+    input,select,textarea { border-radius:7px; }
+    @media(min-width:1200px) { .day .lesson { grid-template-columns:64px 1fr; align-items:center; min-height:86px; }.lesson-number{font-size:1.12rem;} }
+    @media(max-width:850px) { body{padding-left:170px}header,nav{width:170px}header{padding:24px 18px}header>.btn{width:134px;left:18px}main{padding:28px 20px}.week{gap:10px} }
+    @media(max-width:640px) {
+      body{padding-left:0;padding-bottom:74px}header{position:relative;width:100%;height:auto;padding:18px 20px;display:flex}header h1{max-width:none;font-size:1rem}header span{margin-top:2px}header>.btn{position:static;width:auto;padding:8px 10px}nav{top:auto;bottom:0;width:100%;height:66px;flex-direction:row;gap:0;padding:6px;background:white;border-top:1px solid var(--line);overflow:visible}nav button{flex:1;padding:5px 2px;text-align:center;font-size:.65rem;color:var(--muted)}nav button::before{display:block;width:auto;margin-bottom:3px;font-size:1.2rem}nav button.active{background:var(--pale);color:var(--blue)}nav button:hover{background:var(--pale);color:var(--blue)}main{padding:24px 16px}.toolbar h2{font-size:1.35rem}.week{grid-template-columns:repeat(5,76vw);scroll-snap-type:x mandatory}.day{scroll-snap-align:start}.day .lesson{grid-template-columns:64px 1fr;min-height:86px}.lesson-number{font-size:1.15rem}.toolbar{gap:16px}.toolbar .hint{max-width:270px;line-height:1.6}.slot{min-height:106px}.actions{max-width:100%}
+    }
   </style>
 </head>
 <body>
@@ -183,10 +235,12 @@
       [['subjects','Subject'],['grades','Grade'],['classes','Class'],['rooms','Room']].forEach(([id,key])=>$(id).innerHTML=(state.masters[key]||[]).map(value=>`<option value="${escapeHtml(value)}">`).join(''));
       $('topics').innerHTML=(state.masters.Topic||[]).map(value=>`<option value="${escapeHtml(value)}">`).join('');
       renderMasters();
+      document.querySelectorAll('#weekGrid .day').forEach((column,i)=>column.classList.toggle('current-day',state.week.days[i].date===localDate(new Date())));
     }
     function lessonCard(item){const id=safeId(item.ID);const number=item.NumberMode==='none'?'':`<span class="badge">No.${item.LessonNo}</span>`;return `<article class="lesson" onclick="editLesson(decodeURIComponent('${id}'))"><div class="period">${item.Period}限</div><div><h3>${escapeHtml(item.Subject)} ${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</h3><p>${escapeHtml(item.Topic||item.Room||'')}</p><button class="btn" style="margin-top:7px;padding:4px 8px" onclick="event.stopPropagation();openRecordEditor(decodeURIComponent('${id}'))">記録</button></div>${number}</article>`;}
     function weekSlot(date,period,item){return `<div class="slot" data-period="${period}" onclick="moveSelected('${date}',${period})" ondragover="event.preventDefault()" ondrop="dropLesson(event,'${date}',${period})">${item?weekLessonCard(item):''}</div>`;}
-    function weekLessonCard(item){const id=safeId(item.ID);const selected=state.selectedLessonId===item.ID?' selected':'';const number=item.NumberMode==='none'?'<div class="lesson-number none">番号なし</div>':`<div class="lesson-number">No.${escapeHtml(item.LessonNo)}</div>`;return `<article class="lesson${selected}" draggable="true" ondragstart="dragLesson(event,decodeURIComponent('${id}'))" onclick="event.stopPropagation();tapWeekLesson(decodeURIComponent('${id}'))" ondblclick="event.stopPropagation();editLesson(decodeURIComponent('${id}'))">${number}<div><h3>${escapeHtml(item.Subject)}</h3><p>${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</p></div></article>`;}
+    function subjectStyle(subject){if(subject==='理科')return '--subject-color:#4961cb;--subject-bg:#f0f2fc';if(/総合|学活|道徳/.test(subject))return '--subject-color:#54816a;--subject-bg:#f0f6f2';return '--subject-color:#a87a36;--subject-bg:#fcf7ee';}
+    function weekLessonCard(item){const id=safeId(item.ID);const selected=state.selectedLessonId===item.ID?' selected':'';const number=item.NumberMode==='none'?'<div class="lesson-number none">番号なし</div>':`<div class="lesson-number">No.${escapeHtml(item.LessonNo)}</div>`;return `<article class="lesson${selected}" style="${subjectStyle(item.Subject)}" draggable="true" ondragstart="dragLesson(event,decodeURIComponent('${id}'))" onclick="event.stopPropagation();tapWeekLesson(decodeURIComponent('${id}'))" ondblclick="event.stopPropagation();editLesson(decodeURIComponent('${id}'))">${number}<div class="lesson-content"><h3>${escapeHtml(item.Subject)}</h3><p>${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</p></div></article>`;}
     function showView(name){document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===name));['today','week','basic','records','settings'].forEach(x=>$(x+'View').hidden=x!==name);if(name==='records')loadRecords();}
     function openEditor(item={}){const values={lessonId:item.ID||'',date:item.Date||state.date,period:item.Period||'',subject:item.Subject||'',grade:item.Grade||'',className:item.Class||'',room:item.Room||'',topic:item.Topic||'',numberMode:item.NumberMode||'auto',lessonNo:item.LessonNo||'',startTime:item.StartTime||'',endTime:item.EndTime||'',memo:item.Memo||''};Object.entries(values).forEach(([id,value])=>$(id).value=value);$('lessonNo').disabled=values.numberMode!=='manual';$('deleteButton').hidden=!item.ID;$('duplicateButton').hidden=!item.ID;$('editorTitle').textContent=item.ID?'授業を編集':'授業を追加';$('editor').showModal();}
     function editLesson(id){openEditor(state.lessons.find(x=>x.ID===id));}
@@ -198,7 +252,7 @@
     function tapWeekLesson(id){const target=state.lessons.find(x=>x.ID===id);if(state.selectedLessonId&&state.selectedLessonId!==id&&target){moveLesson(state.selectedLessonId,target.Date,Number(target.Period));return;}selectLesson(id);}
     function dragLesson(event,id){event.dataTransfer.setData('text/plain',id);event.dataTransfer.effectAllowed='move';}
     function dropLesson(event,date,period){event.preventDefault();const id=event.dataTransfer.getData('text/plain');if(id)moveLesson(id,date,period);}
-    function moveSelected(date,period){if(state.selectedLessonId)moveLesson(state.selectedLessonId,date,period);}
+    function moveSelected(date,period){if(state.selectedLessonId)moveLesson(state.selectedLessonId,date,period);else if(!state.lessons.some(item=>item.Date===date&&Number(item.Period)===period))openEditor({Date:date,Period:period});}
     async function moveLesson(id,date,period){const source=state.lessons.find(x=>x.ID===id);if(!source||(source.Date===date&&Number(source.Period)===period)){state.selectedLessonId=null;render();return;}try{await call('move',{ID:id,Date:date,Period:period});state.selectedLessonId=null;notify('授業を移動しました');await load();}catch(error){notify(error.message,true);}}
     function openBasicEditor(item={}){const values={basicWeekday:item.Weekday||1,basicPeriod:item.Period||'',basicSubject:item.Subject||'',basicGrade:item.Grade||'',basicClass:item.Class||'',basicRoom:item.Room||'',basicTopic:item.Topic||'',basicNumberMode:item.NumberMode||'auto',basicStartTime:item.StartTime||'',basicEndTime:item.EndTime||''};Object.entries(values).forEach(([id,value])=>$(id).value=value);$('deleteBasicButton').hidden=!item.Subject;$('basicWeekday').disabled=Boolean(item.Subject);$('basicPeriod').disabled=Boolean(item.Subject);$('basicEditor').showModal();}
     function editBasic(weekday,period){openBasicEditor(state.basicTimetable.find(x=>Number(x.Weekday)===weekday&&Number(x.Period)===period));}
