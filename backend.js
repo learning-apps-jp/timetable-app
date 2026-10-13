@@ -97,7 +97,6 @@ function getWeek_(date) {
   const friday = addDays_(monday, 4);
   const from = formatDate_(monday);
   const to = formatDate_(friday);
-  applyBasicTimetable_(from, true);
   return {
     from: from,
     to: to,

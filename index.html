@@ -149,7 +149,7 @@
     </section>
     <section id="weekView" hidden>
       <div class="toolbar"><div><h2>今週の時間割</h2><div class="hint">PCはドラッグ、スマホは授業を選択して移動先をタップ</div></div><div class="actions"><button class="btn" onclick="shiftWeek(-7)">← 前週</button><button class="btn" onclick="shiftWeek(7)">翌週 →</button></div></div>
-      <div id="weekRange" style="color:var(--muted);margin-bottom:12px"></div><div id="weekGrid" class="week"></div>
+      <div class="actions" style="align-items:center;margin-bottom:16px"><div id="weekRange" style="color:var(--muted);margin-right:auto"></div><button class="btn" onclick="applyBasic()">この週に基本時間割を反映</button></div><div id="weekGrid" class="week"></div>
     </section>
     <section id="basicView" hidden>
       <div class="toolbar"><h2>基本時間割</h2><div class="actions"><button class="btn" onclick="applyBasic()">表示週へ反映</button><button class="btn primary" onclick="openBasicEditor()">＋ 時間割</button></div></div>
@@ -270,7 +270,7 @@
     function closeBasicEditor(){$('basicEditor').close();$('basicWeekday').disabled=false;$('basicPeriod').disabled=false;}
     async function saveBasic(event){event.preventDefault();const payload={Weekday:Number($('basicWeekday').value),Period:Number($('basicPeriod').value),Subject:$('basicSubject').value,Grade:$('basicGrade').value,Class:$('basicClass').value,Room:$('basicRoom').value,Topic:$('basicTopic').value,NumberMode:$('basicNumberMode').value,StartTime:$('basicStartTime').value,EndTime:$('basicEndTime').value};try{await call('saveBasic',payload);closeBasicEditor();notify('基本時間割を保存しました');await load();}catch(error){notify(error.message,true);}}
     async function removeBasic(){if(!confirm('この基本時間割を削除しますか？'))return;try{await call('deleteBasic',{Weekday:Number($('basicWeekday').value),Period:Number($('basicPeriod').value)});closeBasicEditor();notify('削除しました');await load();}catch(error){notify(error.message,true);}}
-    async function applyBasic(){try{const result=await call('applyBasic',{date:state.date});notify(result.created?`${result.created}件を作成しました`:'追加する授業はありません');await load();}catch(error){notify(error.message,true);}}
+    async function applyBasic(){const date=new Date(state.date+'T00:00:00');const day=date.getDay();date.setDate(date.getDate()+(day===0?-6:1-day));const from=localDate(date);date.setDate(date.getDate()+4);const to=localDate(date);if(!confirm(`${from} 〜 ${to} の週に基本時間割を反映しますか？\n空き枠だけに追加します。登録済みの授業は変更しません。`))return;try{const result=await call('applyBasic',{date:from});notify(result.created?`${result.created}件を作成しました`:'追加する授業はありません');await load();}catch(error){notify(error.message,true);}}
     async function openRecordEditor(lessonId){try{const records=await call('listRecords',{LessonID:lessonId});const record=records[0]||{};$('recordId').value=record.RecordID||'';$('recordLessonId').value=lessonId;$('plan').value=record.Plan||'';$('result').value=record.Result||'';$('homework').value=record.Homework||'';$('reflection').value=record.Reflection||'';$('recordEditor').showModal();}catch(error){notify(error.message,true);}}
     function closeRecordEditor(){$('recordEditor').close();}
     async function saveRecord(event){event.preventDefault();const payload={RecordID:$('recordId').value,LessonID:$('recordLessonId').value,Plan:$('plan').value,Result:$('result').value,Homework:$('homework').value,Reflection:$('reflection').value};try{await call('saveRecord',payload);closeRecordEditor();notify('授業記録を保存しました');await loadRecords();}catch(error){notify(error.message,true);}}
