@@ -131,6 +131,10 @@
     .slot::before { display:none; }
     .slot .lesson { width:100%; height:86px; overflow:auto; }
     @media(max-width:640px) { .week { grid-template-columns:42px repeat(5,calc(76vw - 42px)); scroll-padding-left:52px; }.period-row{font-size:1rem}.day-head{white-space:nowrap} }
+    .basic-add { width:100%; height:86px; border:1px dashed #dce2ec; background:transparent; border-radius:8px; color:#9ca8bb; font-size:1.2rem; }
+    .basic-add:hover { background:#edf0f7; color:var(--blue); }
+    .day .basic-card { grid-template-columns:1fr; text-align:left; cursor:pointer; }
+    .basic-mode { font-size:.65rem!important; margin-top:5px!important; }
   </style>
 </head>
 <body>
@@ -153,7 +157,8 @@
     </section>
     <section id="basicView" hidden>
       <div class="toolbar"><h2>基本時間割</h2><div class="actions"><button class="btn" onclick="applyBasic()">表示週へ反映</button><button class="btn primary" onclick="openBasicEditor()">＋ 時間割</button></div></div>
-      <div id="basicGrid" class="basic-grid"></div>
+      <p class="hint">空き枠を選んで登録、授業カードを選んで編集できます。各週への反映は週画面から選べます。</p>
+      <div id="basicGrid" class="week"></div>
     </section>
     <section id="recordsView" hidden>
       <div class="toolbar"><h2>授業記録</h2><div class="actions"><input id="recordSearch" type="search" placeholder="記録を検索"><button class="btn" onclick="loadRecords()">検索</button></div></div>
@@ -242,7 +247,7 @@
       const maxPeriod=Math.max(6,...state.week.days.flatMap(day=>day.lessons.map(x=>Number(x.Period)||0)),...state.basicTimetable.map(x=>Number(x.Period)||0));
       $('weekGrid').innerHTML=`<div class="period-axis"><div class="day-head">時限</div>${Array.from({length:maxPeriod},(_,p)=>`<div class="period-row">${p+1}<span>限</span></div>`).join('')}</div>`+state.week.days.map((day,i)=>`<div class="day"><div class="day-head">${names[i]} ${day.date.slice(5).replace('-','/')}</div>${Array.from({length:maxPeriod},(_,p)=>weekSlot(day.date,p+1,day.lessons.find(x=>Number(x.Period)===p+1))).join('')}</div>`).join('');
       const sortedBasics=[...state.basicTimetable].sort((a,b)=>Number(a.Weekday)-Number(b.Weekday)||Number(a.Period)-Number(b.Period));
-      $('basicGrid').innerHTML=sortedBasics.length?sortedBasics.map(item=>`<article class="lesson" onclick="editBasic(${Number(item.Weekday)},${Number(item.Period)})"><div class="period">${names[Number(item.Weekday)-1]}<br>${item.Period}限</div><div><h3>${escapeHtml(item.Subject)} ${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</h3><p>${escapeHtml(item.Topic||item.Room||'')}</p></div><span class="badge">${item.NumberMode==='none'?'番号なし':'自動採番'}</span></article>`).join(''):'<div class="panel empty">基本時間割はまだ登録されていません。</div>';
+      $('basicGrid').innerHTML=`<div class="period-axis"><div class="day-head">時限</div>${Array.from({length:maxPeriod},(_,p)=>`<div class="period-row">${p+1}<span>限</span></div>`).join('')}</div>`+names.map((name,i)=>`<div class="day"><div class="day-head">${name}曜日</div>${Array.from({length:maxPeriod},(_,p)=>basicSlot(i+1,p+1,sortedBasics.find(item=>Number(item.Weekday)===i+1&&Number(item.Period)===p+1))).join('')}</div>`).join('');
       [['subjects','Subject'],['grades','Grade'],['classes','Class'],['rooms','Room']].forEach(([id,key])=>$(id).innerHTML=(state.masters[key]||[]).map(value=>`<option value="${escapeHtml(value)}">`).join(''));
       $('topics').innerHTML=(state.masters.Topic||[]).map(value=>`<option value="${escapeHtml(value)}">`).join('');
       renderMasters();
@@ -266,6 +271,7 @@
     function moveSelected(date,period){if(state.selectedLessonId)moveLesson(state.selectedLessonId,date,period);else if(!state.lessons.some(item=>item.Date===date&&Number(item.Period)===period))openEditor({Date:date,Period:period});}
     async function moveLesson(id,date,period){const source=state.lessons.find(x=>x.ID===id);if(!source||(source.Date===date&&Number(source.Period)===period)){state.selectedLessonId=null;render();return;}try{await call('move',{ID:id,Date:date,Period:period});state.selectedLessonId=null;notify('授業を移動しました');await load();}catch(error){notify(error.message,true);}}
     function openBasicEditor(item={}){const values={basicWeekday:item.Weekday||1,basicPeriod:item.Period||'',basicSubject:item.Subject||'',basicGrade:item.Grade||'',basicClass:item.Class||'',basicRoom:item.Room||'',basicTopic:item.Topic||'',basicNumberMode:item.NumberMode||'auto',basicStartTime:item.StartTime||'',basicEndTime:item.EndTime||''};Object.entries(values).forEach(([id,value])=>$(id).value=value);$('deleteBasicButton').hidden=!item.Subject;$('basicWeekday').disabled=Boolean(item.Subject);$('basicPeriod').disabled=Boolean(item.Subject);$('basicEditor').showModal();}
+    function basicSlot(weekday,period,item){return `<div class="slot basic-slot"><button type="button" class="${item?'lesson basic-card':'basic-add'}" style="${item?subjectStyle(item.Subject):''}" onclick="openBasicEditor(${item?`state.basicTimetable.find(x=>Number(x.Weekday)===${weekday}&&Number(x.Period)===${period})`:`{Weekday:${weekday},Period:${period}}`})" aria-label="${weekday}曜日 ${period}限 ${item?'編集':'追加'}">${item?`<div class="lesson-content"><h3>${escapeHtml(item.Subject)}</h3><p>${escapeHtml(item.Grade)} ${escapeHtml(item.Class)}</p><p class="basic-mode">${item.NumberMode==='none'?'番号なし':'自動採番'}</p></div>`:'＋'}</button></div>`;}
     function editBasic(weekday,period){openBasicEditor(state.basicTimetable.find(x=>Number(x.Weekday)===weekday&&Number(x.Period)===period));}
     function closeBasicEditor(){$('basicEditor').close();$('basicWeekday').disabled=false;$('basicPeriod').disabled=false;}
     async function saveBasic(event){event.preventDefault();const payload={Weekday:Number($('basicWeekday').value),Period:Number($('basicPeriod').value),Subject:$('basicSubject').value,Grade:$('basicGrade').value,Class:$('basicClass').value,Room:$('basicRoom').value,Topic:$('basicTopic').value,NumberMode:$('basicNumberMode').value,StartTime:$('basicStartTime').value,EndTime:$('basicEndTime').value};try{await call('saveBasic',payload);closeBasicEditor();notify('基本時間割を保存しました');await load();}catch(error){notify(error.message,true);}}
